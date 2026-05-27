@@ -106,7 +106,7 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\kmilo\.gradle\cach
 		ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\AndroidManifest.xml:16:9-48
 	android:dataExtractionRules
 		ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\AndroidManifest.xml:10:9-65
-activity#com.miempresa.sopaletras.presentacion.MainActivity
+activity#com.miempresa.sopaletras.MainActivity
 ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\AndroidManifest.xml:18:9-27:20
 	android:label
 		ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\AndroidManifest.xml:21:13-45
@@ -115,7 +115,7 @@ ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\An
 	android:theme
 		ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\AndroidManifest.xml:22:13-52
 	android:name
-		ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\AndroidManifest.xml:19:13-54
+		ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\AndroidManifest.xml:19:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
 ADDED from C:\Users\kmilo\Documents\aplicacionAndroid\SopaLetras\app\src\main\AndroidManifest.xml:23:13-26:29
 action#android.intent.action.MAIN

@@ -1,27 +1,27 @@
-#Sat May 23 02:11:19 CLT 2026
+#Wed May 27 03:18:59 CLT 2026
 base.0=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
 base.1=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
 base.10=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\9\\classes.dex
 base.11=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex
-base.2=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\11\\classes.dex
+base.2=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\10\\classes.dex
 base.3=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\15\\classes.dex
 base.4=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\1\\classes.dex
 base.5=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\2\\classes.dex
-base.6=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\4\\classes.dex
-base.7=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\6\\classes.dex
-base.8=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\7\\classes.dex
+base.6=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\3\\classes.dex
+base.7=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\4\\classes.dex
+base.8=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\5\\classes.dex
 base.9=C\:\\Users\\kmilo\\Documents\\aplicacionAndroid\\SopaLetras\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\8\\classes.dex
 path.0=classes.dex
 path.1=0/classes.dex
 path.10=9/classes.dex
 path.11=classes2.dex
-path.2=11/classes.dex
+path.2=10/classes.dex
 path.3=15/classes.dex
 path.4=1/classes.dex
 path.5=2/classes.dex
-path.6=4/classes.dex
-path.7=6/classes.dex
-path.8=7/classes.dex
+path.6=3/classes.dex
+path.7=4/classes.dex
+path.8=5/classes.dex
 path.9=8/classes.dex
 renamed.0=classes.dex
 renamed.1=classes2.dex
