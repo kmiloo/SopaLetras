@@ -1,5 +1,7 @@
 # Sopa de Letras
 
+Integrante: Camilo Lovera
+
 Aplicacion Android de sopa de letras desarrollada en Kotlin con Jetpack Compose y Material 3. El juego permite elegir dificultad, genera una matriz de letras, valida palabras seleccionadas por arrastre y muestra progreso, errores, pistas, temporizador y celebracion de victoria.
 
 ## Caracteristicas
