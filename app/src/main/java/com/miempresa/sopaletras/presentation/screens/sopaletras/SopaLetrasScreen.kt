@@ -25,8 +25,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +46,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -54,6 +57,8 @@ import com.miempresa.sopaletras.domain.model.Dificultad
 import com.miempresa.sopaletras.domain.model.Matriz
 import com.miempresa.sopaletras.domain.model.Palabra
 import com.miempresa.sopaletras.domain.model.Posicion
+import com.miempresa.sopaletras.domain.model.PuntajeRanking
+import com.miempresa.sopaletras.domain.model.UsuarioSesion
 import com.miempresa.sopaletras.presentation.components.CountdownTimerComponent
 import com.miempresa.sopaletras.presentation.components.LetterCell
 import com.miempresa.sopaletras.presentation.components.VictoryCelebrationOverlay
@@ -95,6 +100,16 @@ fun SopaLetrasScreen(viewModel: SopaLetrasViewModel) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             HeaderPanel()
+            SessionPanel(
+                usuario = estado.usuarioSesion,
+                cargando = estado.authCargando,
+                mensaje = estado.authMensaje,
+                top10 = estado.top10,
+                onLogin = viewModel::login,
+                onRegister = viewModel::registrar,
+                onLogout = viewModel::cerrarSesion,
+                onRefreshTop = viewModel::cargarTop10
+            )
 
             when {
                 estado.estaCargando -> LoadingPanel()
@@ -112,6 +127,9 @@ fun SopaLetrasScreen(viewModel: SopaLetrasViewModel) {
                         hints = estado.pistasUsadas,
                         difficulty = sopa.dificultad
                     )
+                    estado.guardadoPuntajeMensaje?.let { mensaje ->
+                        StatusMessage(message = mensaje)
+                    }
                     NeonWordGrid(
                         matriz = sopa.matriz,
                         selectedCells = estado.celdasSeleccionadas,
@@ -173,6 +191,207 @@ private fun HeaderPanel() {
                 fontWeight = FontWeight.SemiBold
             )
         }
+    }
+}
+
+@Composable
+private fun SessionPanel(
+    usuario: UsuarioSesion?,
+    cargando: Boolean,
+    mensaje: String?,
+    top10: List<PuntajeRanking>,
+    onLogin: (String, String) -> Unit,
+    onRegister: (String, String, String) -> Unit,
+    onLogout: () -> Unit,
+    onRefreshTop: () -> Unit
+) {
+    var modoRegistro by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, NeonPurple.copy(alpha = 0.28f), RoundedCornerShape(8.dp)),
+        color = HighStimulusSurface,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            if (usuario != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Sesion: ${usuario.username}",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Tus partidas ganadas se guardan en NeonDB.",
+                            color = FocusTextSecondary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    OutlinedButton(onClick = onRefreshTop, shape = RoundedCornerShape(8.dp)) {
+                        Text("TOP 10", fontWeight = FontWeight.Black)
+                    }
+                    Button(onClick = onLogout, shape = RoundedCornerShape(8.dp)) {
+                        Text("SALIR", fontWeight = FontWeight.Black)
+                    }
+                }
+                RankingPanel(top10)
+            } else {
+                Text(
+                    text = "Cuenta opcional",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Black
+                )
+                Text(
+                    text = "Puedes jugar sin cuenta; inicia sesion si quieres guardar puntajes.",
+                    color = FocusTextSecondary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (modoRegistro) {
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text("Usuario") }
+                    )
+                }
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text("Email") }
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text("Contrasena") },
+                    visualTransformation = PasswordVisualTransformation()
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = {
+                            if (modoRegistro) {
+                                onRegister(username, email, password)
+                            } else {
+                                onLogin(email, password)
+                            }
+                        },
+                        enabled = !cargando,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = if (modoRegistro) "REGISTRAR" else "ENTRAR",
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                    TextButton(onClick = { modoRegistro = !modoRegistro }) {
+                        Text(if (modoRegistro) "Ya tengo cuenta" else "Crear cuenta")
+                    }
+                }
+            }
+
+            if (mensaje != null) {
+                Text(
+                    text = mensaje,
+                    color = FocusTextSecondary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RankingPanel(top10: List<PuntajeRanking>) {
+    if (top10.isEmpty()) return
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = "TOP 10",
+            color = MaterialTheme.colorScheme.primary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Black
+        )
+        top10.take(10).forEachIndexed { index, puntaje ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "#${index + 1}",
+                    color = NeonPurple,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.weight(0.5f)
+                )
+                Text(
+                    text = puntaje.username,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1.4f)
+                )
+                Text(
+                    text = puntaje.score.toString(),
+                    color = NeonCyan,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.weight(0.8f)
+                )
+                Text(
+                    text = "${puntaje.durationSeconds}s",
+                    color = FocusTextSecondary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(0.7f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusMessage(message: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = HighStimulusSurfaceHigh,
+        shape = RoundedCornerShape(8.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.28f))
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(10.dp),
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

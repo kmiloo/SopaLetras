@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import com.miempresa.sopaletras.data.local.datasource.FuentePalabrasLocal
 import com.miempresa.sopaletras.data.remote.datasource.FuentePalabrasRemota
 import com.miempresa.sopaletras.data.remote.datasource.ProveedorRetrofit
+import com.miempresa.sopaletras.data.repository.SesionRepositorioImpl
 import com.miempresa.sopaletras.data.repository.SopaLetrasRepositorioImpl
 import com.miempresa.sopaletras.domain.usecase.ObtenerSopaLetrasUseCase
 import com.miempresa.sopaletras.domain.usecase.ValidarPalabraUseCase
@@ -35,9 +36,14 @@ class MainActivity : ComponentActivity() {
             fuenteRemota = fuenteRemota,
             fuenteLocal = fuenteLocal
         )
+        val sesionRepositorio = SesionRepositorioImpl(
+            api = ProveedorRetrofit.servicioBackend,
+            preferencias = getSharedPreferences("sopa_letras_sesion", MODE_PRIVATE)
+        )
         SopaLetrasViewModel.Factoria(
             obtenerSopaLetrasUseCase = ObtenerSopaLetrasUseCase(repositorio),
-            validarPalabraUseCase = ValidarPalabraUseCase()
+            validarPalabraUseCase = ValidarPalabraUseCase(),
+            sesionRepositorio = sesionRepositorio
         )
     }
 

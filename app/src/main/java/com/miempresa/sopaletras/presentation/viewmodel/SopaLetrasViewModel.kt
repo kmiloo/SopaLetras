@@ -9,6 +9,7 @@ import com.miempresa.sopaletras.domain.usecase.ValidarPalabraUseCase
 import com.miempresa.sopaletras.domain.model.Celda
 import com.miempresa.sopaletras.domain.model.Dificultad
 import com.miempresa.sopaletras.domain.model.Posicion
+import com.miempresa.sopaletras.domain.repository.SesionRepositorio
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,12 +26,57 @@ import kotlinx.coroutines.launch
  */
 class SopaLetrasViewModel(
     private val obtenerSopaLetrasUseCase: ObtenerSopaLetrasUseCase,
-    private val validarPalabraUseCase: ValidarPalabraUseCase
+    private val validarPalabraUseCase: ValidarPalabraUseCase,
+    private val sesionRepositorio: SesionRepositorio
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(SopaLetrasEstado())
     val estado: StateFlow<SopaLetrasEstado> = _estado.asStateFlow()
     private var temporizadorJob: Job? = null
+    private var puntajeGuardadoParaPartida = false
+
+    init {
+        _estado.update { it.copy(usuarioSesion = sesionRepositorio.usuarioActual) }
+        if (sesionRepositorio.haySesionActiva) cargarTop10()
+    }
+
+    fun registrar(username: String, email: String, password: String) {
+        ejecutarAuth {
+            sesionRepositorio.registrar(username.trim(), email.trim(), password)
+        }
+    }
+
+    fun login(email: String, password: String) {
+        ejecutarAuth {
+            sesionRepositorio.login(email.trim(), password)
+        }
+    }
+
+    fun cerrarSesion() {
+        sesionRepositorio.cerrarSesion()
+        _estado.update {
+            it.copy(
+                usuarioSesion = null,
+                authMensaje = "Sesion cerrada. Puedes jugar sin guardar puntajes.",
+                guardadoPuntajeMensaje = null,
+                top10 = emptyList()
+            )
+        }
+    }
+
+    fun cargarTop10() {
+        if (!sesionRepositorio.haySesionActiva) return
+
+        viewModelScope.launch {
+            sesionRepositorio.obtenerTop10()
+                .onSuccess { ranking ->
+                    _estado.update { it.copy(top10 = ranking, authMensaje = null) }
+                }
+                .onFailure { error ->
+                    _estado.update { it.copy(authMensaje = error.message ?: "No se pudo cargar el ranking") }
+                }
+        }
+    }
 
     /**
      * Solicita una nueva sopa de letras según la dificultad indicada.
@@ -55,9 +101,11 @@ class SopaLetrasViewModel(
                             pistasUsadas = 0,
                             ultimaSeleccionInvalida = emptyList(),
                             eventoSeleccionInvalida = 0,
-                            mensajeError = null
+                            mensajeError = null,
+                            guardadoPuntajeMensaje = null
                         )
                     }
+                    puntajeGuardadoParaPartida = false
                     iniciarTemporizador()
                 }
                 .onFailure { error ->
@@ -181,7 +229,8 @@ class SopaLetrasViewModel(
                 celdasSeleccionadas = emptyList(),
                 palabrasEncontradas = palabrasReveladas,
                 juegoCompletado = true,
-                juegoRendido = true
+                juegoRendido = true,
+                guardadoPuntajeMensaje = "Partida rendida: no se guarda puntaje."
             )
         }
     }
@@ -235,9 +284,96 @@ class SopaLetrasViewModel(
                 palabrasEncontradas = palabrasActualizadas.filter { it.estaEncontrada },
                 juegoCompletado = sopaActualizada.estaCompletada
             ).also {
-                if (sopaActualizada.estaCompletada) temporizadorJob?.cancel()
+                if (sopaActualizada.estaCompletada) {
+                    temporizadorJob?.cancel()
+                    guardarPuntajeSiCorresponde(estadoActual)
+                }
             }
         }
+    }
+
+    private fun ejecutarAuth(
+        operacion: suspend () -> Result<com.miempresa.sopaletras.domain.model.UsuarioSesion>
+    ) {
+        viewModelScope.launch {
+            _estado.update { it.copy(authCargando = true, authMensaje = null) }
+
+            operacion()
+                .onSuccess { usuario ->
+                    _estado.update {
+                        it.copy(
+                            usuarioSesion = usuario,
+                            authCargando = false,
+                            authMensaje = "Sesion iniciada como ${usuario.username}"
+                        )
+                    }
+                    cargarTop10()
+                }
+                .onFailure { error ->
+                    _estado.update {
+                        it.copy(
+                            authCargando = false,
+                            authMensaje = error.message ?: "No se pudo iniciar sesion"
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun guardarPuntajeSiCorresponde(estadoPartida: SopaLetrasEstado) {
+        if (puntajeGuardadoParaPartida) return
+        puntajeGuardadoParaPartida = true
+
+        val sopa = estadoPartida.sopaLetras ?: return
+        if (!sesionRepositorio.haySesionActiva) {
+            _estado.update { it.copy(guardadoPuntajeMensaje = "Puntaje local. Inicia sesion para guardarlo.") }
+            return
+        }
+
+        val score = calcularPuntaje(
+            dificultad = sopa.dificultad,
+            segundosTranscurridos = estadoPartida.segundosTranscurridos,
+            errores = estadoPartida.errores,
+            pistas = estadoPartida.pistasUsadas,
+            palabras = sopa.palabras.size
+        )
+
+        viewModelScope.launch {
+            sesionRepositorio.guardarPuntaje(
+                score = score,
+                durationSeconds = estadoPartida.segundosTranscurridos.coerceAtLeast(1)
+            )
+                .onSuccess {
+                    _estado.update { it.copy(guardadoPuntajeMensaje = "Puntaje guardado: $score") }
+                    cargarTop10()
+                }
+                .onFailure { error ->
+                    _estado.update {
+                        it.copy(guardadoPuntajeMensaje = error.message ?: "No se pudo guardar el puntaje")
+                    }
+                }
+        }
+    }
+
+    private fun calcularPuntaje(
+        dificultad: Dificultad,
+        segundosTranscurridos: Int,
+        errores: Int,
+        pistas: Int,
+        palabras: Int
+    ): Int {
+        val totalSeconds = dificultad.totalSeconds()
+        val remainingSeconds = (totalSeconds - segundosTranscurridos).coerceAtLeast(0)
+        val speedBonus = remainingSeconds * 8
+        val base = palabras * 500 + totalSeconds
+        val penalties = errores * 120 + pistas * 80
+        return (base + speedBonus - penalties).coerceAtLeast(0)
+    }
+
+    private fun Dificultad.totalSeconds(): Int = when (this) {
+        Dificultad.FACIL -> 90
+        Dificultad.MEDIO -> 120
+        Dificultad.DIFICIL -> 150
     }
 
     private fun iniciarTemporizador() {
@@ -267,7 +403,8 @@ class SopaLetrasViewModel(
      */
     class Factoria(
         private val obtenerSopaLetrasUseCase: ObtenerSopaLetrasUseCase,
-        private val validarPalabraUseCase: ValidarPalabraUseCase
+        private val validarPalabraUseCase: ValidarPalabraUseCase,
+        private val sesionRepositorio: SesionRepositorio
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -276,7 +413,8 @@ class SopaLetrasViewModel(
             }
             return SopaLetrasViewModel(
                 obtenerSopaLetrasUseCase = obtenerSopaLetrasUseCase,
-                validarPalabraUseCase = validarPalabraUseCase
+                validarPalabraUseCase = validarPalabraUseCase,
+                sesionRepositorio = sesionRepositorio
             ) as T
         }
     }
